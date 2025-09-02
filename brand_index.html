@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brand Support Assistant</title>
+    <style>
+        /* Brand Portal Chat Interface - Solid Colors Only */
+        :root {
+            --primary-color: #226137;
+            --secondary-color: #FCB1A8;
+            --third-color: #F26D14;
+            --background-color: #ffffff;
+            --surface-color: #f8f9fa;
+            --text-primary: #1f2937;
+            --text-secondary: #6b7280;
+            --border-color: #e5e7eb;
+            --success-color: #10b981;
+            --error-color: #ef4444;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: var(--primary-color);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .chat-container {
+            width: 100%;
+            max-width: 900px;
+            height: 85vh;
+            max-height: 800px;
+            background: var(--background-color);
+            border-radius: 16px;
+            box-shadow: 0 25px 50px rgba(34, 97, 55, 0.3);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+        }
+
+        .chat-header {
+            background: var(--primary-color);
+            color: white;
+            padding: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: relative;
+        }
+
+        .chat-header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--third-color);
+        }
+
+        .bot-info {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .bot-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: var(--secondary-color);
+            border: 2px solid var(--third-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: var(--primary-color);
+        }
+
+        .bot-details {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .bot-name {
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .bot-status {
+            font-size: 13px;
+            opacity: 0.9;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--success-color);
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .header-btn {
+            background: var(--secondary-color);
+            border: 1px solid var(--third-color);
+            color: var(--primary-color);
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+
+        .header-btn:hover {
+            background: var(--third-color);
+            color: white;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+            background: var(--surface-color);
+            scroll-behavior: smooth;
+        }
+
+        .message {
+            margin-bottom: 24px;
+            display: flex;
+            align-items: flex-start;
+            animation: slideUp 0.4s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.user {
+            justify-content: flex-end;
+        }
+
+        .message.bot {
+            gap: 12px;
+        }
+
+        .message-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--third-color);
+            border: 2px solid var(--primary-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            color: white;
+            flex-shrink: 0;
+            margin-top: 4px;
+        }
+
+        .message-wrapper {
+            display: flex;
+            flex-direction: column;
+            max-width: 75%;
+            gap: 8px;
+        }
+
+        .message.user .message-wrapper {
+            align-items: flex-end;
+        }
+
+        .message.bot .message-wrapper {
+            align-items: flex-start;
+        }
+
+        .message-content {
+            padding: 16px 20px;
+            border-radius: 16px;
+            word-wrap: break-word;
+            line-height: 1.5;
+            position: relative;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .message.user .message-content {
+            background: var(--primary-color);
+            color: white;
+            border-bottom-right-radius: 6px;
+        }
+
+        .message.bot .message-content {
+            background: var(--third-color);
+            color: white;
+            border-bottom-left-radius: 6px;
+        }
+
+        .message-time {
+            font-size: 12px;
+            color: var(--text-secondary);
+            padding: 0 4px;
+        }
+
+        .quick-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+
+        .quick-action {
+            background: var(--secondary-color);
+            border: 1px solid var(--third-color);
+            color: var(--primary-color);
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+
+        .quick-action:hover {
+            background: var(--third-color);
+            color: white;
+        }
+
+        .typing-indicator {
+            display: none;
+            padding: 16px 20px;
+            background: var(--third-color);
+            color: white;
+            border-radius: 16px;
+            border-bottom-left-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            width: fit-content;
+            margin: 0 24px 16px 72px;
+        }
+
+        .typing-indicator.active {
+            display: block;
+        }
+
+        .typing-dots {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: white;
+            animation: typing 1.4s infinite ease-in-out;
+        }
+
+        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes typing {
+            0%, 80%, 100% { transform: scale(0.8); opacity: 0.5; }
+            40% { transform: scale(1.2); opacity: 1; }
+        }
+
+        .error-message {
+            background: #fef2f2;
+            color: var(--error-color);
+            padding: 16px 20px;
+            border-radius: 12px;
+            margin: 16px 24px;
+            font-size: 14px;
+            border: 1px solid #fecaca;
+            display: none;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .error-message.active {
+            display: flex;
+        }
+
+        .chat-input-container {
+            padding: 24px;
+            background: var(--background-color);
+            border-top: 1px solid var(--border-color);
+        }
+
+        .input-wrapper {
+            display: flex;
+            gap: 12px;
+            align-items: flex-end;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 16px 20px;
+            border: 2px solid var(--border-color);
+            border-radius: 24px;
+            font-size: 15px;
+            outline: none;
+            transition: all 0.3s;
+            color: var(--text-primary);
+            background: var(--surface-color);
+            resize: none;
+            max-height: 120px;
+            min-height: 52px;
+            font-family: inherit;
+            line-height: 1.4;
+        }
+
+        .chat-input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(34, 97, 55, 0.1);
+            background: var(--background-color);
+        }
+
+        .send-btn {
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            border: none;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            box-shadow: 0 4px 12px rgba(34, 97, 55, 0.3);
+            flex-shrink: 0;
+        }
+
+        .send-btn:hover:not(:disabled) {
+            background: var(--third-color);
+            transform: scale(1.1);
+        }
+
+        .send-btn:active:not(:disabled) {
+            transform: scale(0.95);
+        }
+
+        .send-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .welcome-section {
+            background: white;
+            border: 1px solid var(--secondary-color);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+        }
+
+        .welcome-title {
+            color: var(--primary-color);
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .help-categories {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .help-category {
+            background: var(--background-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+
+        .help-category:hover {
+            border-color: var(--third-color);
+            background: var(--secondary-color);
+            transform: translateY(-2px);
+        }
+
+        .category-icon {
+            font-size: 24px;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .category-title {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+
+        .category-desc {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        /* Scrollbar Styling */
+        .chat-messages::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .chat-messages::-webkit-scrollbar-track {
+            background: var(--surface-color);
+            border-radius: 10px;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: var(--primary-color);
+            border-radius: 10px;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb:hover {
+            background: var(--third-color);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
+            .chat-container {
+                width: 100%;
+                height: 95vh;
+                border-radius: 12px;
+            }
+            
+            .chat-header {
+                padding: 16px;
+            }
+            
+            .bot-name {
+                font-size: 18px;
+            }
+            
+            .chat-messages {
+                padding: 16px;
+            }
+            
+            .message-wrapper {
+                max-width: 85%;
+            }
+            
+            .help-categories {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <div class="bot-info">
+                <div class="bot-avatar">🛍️</div>
+                <div class="bot-details">
+                    <div class="bot-name">Brand Assistant</div>
+                    <div class="bot-status">
+                        <span class="status-dot"></span>
+                        Ready to help with brand portal
+                    </div>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button class="header-btn" onclick="clearChat()">Clear</button>
+                <button class="header-btn" onclick="exportChat()">Export</button>
+            </div>
+        </div>
+
+        <div class="chat-messages" id="chatMessages">
+            <div class="welcome-section">
+                <div class="welcome-title">
+                    <span>👋</span>
+                    Brand Portal Support
+                </div>
+                <p style="color: var(--text-secondary); line-height: 1.5;">I'm here to help you manage your brand presence, products, and packages. Ask me about any aspect of using the brand portal effectively.</p>
+                
+                <div class="help-categories">
+                    <div class="help-category" onclick="askQuestion('How do I purchase and manage brand packages?')">
+                        <span class="category-icon">💳</span>
+                        <div class="category-title">Brand Packages</div>
+                        <div class="category-desc">Purchase, upgrade, manage</div>
+                    </div>
+                    <div class="help-category" onclick="askQuestion('How do I view my live products on the app?')">
+                        <span class="category-icon">📱</span>
+                        <div class="category-title">Live Products</div>
+                        <div class="category-desc">View, monitor, track</div>
+                    </div>
+                    <div class="help-category" onclick="askQuestion('How do I add and submit products for review?')">
+                        <span class="category-icon">📦</span>
+                        <div class="category-title">Product Submission</div>
+                        <div class="category-desc">Add, edit, submit</div>
+                    </div>
+                    <div class="help-category" onclick="askQuestion('How do I submit requests to the admin team?')">
+                        <span class="category-icon">📝</span>
+                        <div class="category-title">Admin Requests</div>
+                        <div class="category-desc">Support, changes, help</div>
+                    </div>
+                    <div class="help-category" onclick="askQuestion('How do I track my brand performance and analytics?')">
+                        <span class="category-icon">📊</span>
+                        <div class="category-title">Analytics</div>
+                        <div class="category-desc">Performance, insights</div>
+                    </div>
+                    <div class="help-category" onclick="askQuestion('How do I manage my brand profile and settings?')">
+                        <span class="category-icon">⚙️</span>
+                        <div class="category-title">Profile Settings</div>
+                        <div class="category-desc">Account, preferences</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="typing-indicator" id="typingIndicator">
+            <div class="typing-dots">
+                <span class="typing-dot"></span>
+                <span class="typing-dot"></span>
+                <span class="typing-dot"></span>
+            </div>
+        </div>
+
+        <div class="error-message" id="errorMessage">
+            <span>⚠️</span>
+            <span id="errorText"></span>
+        </div>
+
+        <div class="chat-input-container">
+            <div class="input-wrapper">
+                <textarea 
+                    class="chat-input" 
+                    id="chatInput" 
+                    placeholder="Ask me about brand packages, products, or any brand portal feature..."
+                    rows="1"
+                ></textarea>
+                <button class="send-btn" id="sendBtn">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration for Brand Portal Support Bot
+        const CONFIG = {
+            GEMINI_API_KEY: 'AIzaSyDE5k28i_6PKR_g93EbV8YUNwNf10d9PPs',
+            BOT_NAME: 'Brand Assistant',
+            SYSTEM_PROMPT: `You are a helpful brand portal support assistant. You specialize in helping brands with:
+
+1. BRAND PACKAGES: Guide users through purchasing brand packages, understanding different package tiers, upgrading/downgrading, payment methods, billing cycles, and package benefits.
+
+2. LIVE PRODUCTS: Help brands view and monitor their live products on the app, understand product visibility, track product performance, and manage product status.
+
+3. PRODUCT SUBMISSION: Assist with adding new products, editing product details, uploading product images, writing descriptions, setting pricing, submitting products for admin review, and understanding the approval process.
+
+4. ADMIN REQUESTS: Guide brands through submitting requests to the admin team for support, feature requests, account issues, technical problems, or policy questions.
+
+5. BRAND ANALYTICS: Help interpret brand performance metrics, product analytics, sales data, customer engagement, and growth insights.
+
+6. PROFILE MANAGEMENT: Assist with updating brand profiles, managing account settings, notification preferences, and brand information.
+
+Always provide:
+- Clear step-by-step instructions
+- Specific examples and screenshots descriptions when helpful
+- Information about approval timelines and processes
+- Best practices for product listings and brand management
+- Troubleshooting for common issues
+
+Be friendly, professional, and supportive. Remember that brands are business partners, so maintain a respectful and helpful tone.`
+        };
+
+        // Initialize variables
+        let chatHistory = [];
+        let isProcessing = false;
+
+        // Format time helper
+        function formatTime(date) {
+            return new Intl.DateTimeFormat('en-US', {
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true
+            }).format(date);
+        }
+
+        // Add message to UI
+        function addMessageToUI(message, sender, showTime = true) {
+            const chatMessages = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}`;
+            
+            if (sender === 'bot') {
+                const avatarDiv = document.createElement('div');
+                avatarDiv.className = 'message-avatar';
+                avatarDiv.innerHTML = '🛍️';
+                messageDiv.appendChild(avatarDiv);
+            }
+            
+            const wrapperDiv = document.createElement('div');
+            wrapperDiv.className = 'message-wrapper';
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+            contentDiv.innerHTML = formatMessage(message);
+            
+            wrapperDiv.appendChild(contentDiv);
+            
+            if (showTime) {
+                const timeDiv = document.createElement('div');
+                timeDiv.className = 'message-time';
+                timeDiv.textContent = formatTime(new Date());
+                wrapperDiv.appendChild(timeDiv);
+            }
+
+            // Add quick actions for bot messages
+            if (sender === 'bot') {
+                const quickActions = createQuickActions(message);
+                if (quickActions) {
+                    wrapperDiv.appendChild(quickActions);
+                }
+            }
+            
+            messageDiv.appendChild(wrapperDiv);
+            chatMessages.appendChild(messageDiv);
+            
+            // Scroll to bottom
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // Format message with basic markdown support
+        function formatMessage(message) {
+            return message
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                .replace(/`(.*?)`/g, '<code style="background: rgba(255,255,255,0.2); padding: 2px 6px; border-radius: 4px; font-family: monospace;">$1</code>')
+                .replace(/\n/g, '<br>');
+        }
+
+        // Create quick action buttons for common follow-ups
+        function createQuickActions(message) {
+            const actions = [];
+            
+            if (message.toLowerCase().includes('package') || message.toLowerCase().includes('payment')) {
+                actions.push('Show package pricing');
+                actions.push('How to upgrade package');
+            }
+            
+            if (message.toLowerCase().includes('product') || message.toLowerCase().includes('submit')) {
+                actions.push('Product submission checklist');
+                actions.push('Track submission status');
+            }
+            
+            if (message.toLowerCase().includes('analytics') || message.toLowerCase().includes('performance')) {
+                actions.push('Understanding analytics dashboard');
+                actions.push('Improving product visibility');
+            }
+
+            if (actions.length === 0) {
+                actions.push('Tell me more');
+                actions.push('What else can I help with?');
+            }
+            
+            if (actions.length > 0) {
+                const quickActionsDiv = document.createElement('div');
+                quickActionsDiv.className = 'quick-actions';
+                
+                actions.slice(0, 3).forEach(action => {
+                    const actionBtn = document.createElement('button');
+                    actionBtn.className = 'quick-action';
+                    actionBtn.textContent = action;
+                    actionBtn.onclick = () => askQuestion(action);
+                    quickActionsDiv.appendChild(actionBtn);
+                });
+                
+                return quickActionsDiv;
+            }
+            
+            return null;
+        }
+
+        // Show/hide typing indicator
+        function toggleTyping(show) {
+            const indicator = document.getElementById('typingIndicator');
+            if (show) {
+                indicator.classList.add('active');
+            } else {
+                indicator.classList.remove('active');
+            }
+            
+            const chatMessages = document.getElementById('chatMessages');
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // Show error message
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            const errorText = document.getElementById('errorText');
+            errorText.textContent = message;
+            errorDiv.classList.add('active');
+            
+            setTimeout(() => {
+                errorDiv.classList.remove('active');
+            }, 5000);
+        }
+
+        // Call Gemini API
+        async function callGeminiAPI(userMessage) {
+            if (!CONFIG.GEMINI_API_KEY || CONFIG.GEMINI_API_KEY === 'AIzaSyDE5k28i_6PKR_g93EbV8YUNwNf10d9PPs') {
+                return "I apologize, but I'm not properly configured yet. Please add your Gemini API key to start using the brand assistant.";
+            }
+
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${CONFIG.GEMINI_API_KEY}`;
+            
+            const messages = chatHistory.length === 0 
+                ? [{ role: 'user', parts: [{ text: CONFIG.SYSTEM_PROMPT + '\n\nUser: ' + userMessage }] }]
+                : [...chatHistory, { role: 'user', parts: [{ text: userMessage }] }];
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: messages,
+                        generationConfig: {
+                            temperature: 0.4,
+                            topK: 40,
+                            topP: 0.8,
+                            maxOutputTokens: 2048,
+                        }
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(`API Error: ${response.status} - ${errorData.error?.message || 'Unknown error'}`);
+                }
+
+                const data = await response.json();
+                
+                if (data.candidates && data.candidates[0] && data.candidates[0].content) {
+                    const botResponse = data.candidates[0].content.parts[0].text;
+                    
+                    // Update chat history
+                    chatHistory.push(
+                        { role: 'user', parts: [{ text: userMessage }] },
+                        { role: 'model', parts: [{ text: botResponse }] }
+                    );
+                    
+                    return botResponse;
+                } else {
+                    throw new Error('Invalid response format from API');
+                }
+            } catch (error) {
+                console.error('API Error:', error);
+                if (error.message.includes('API_KEY')) {
+                    return "Please check your API key configuration.";
+                } else if (error.message.includes('quota') || error.message.includes('limit')) {
+                    return "I'm currently experiencing high usage. Please try again in a moment.";
+                } else {
+                    return "I encountered a technical issue. Please try rephrasing your question or try again later.";
+                }
+            }
+        }
+
+        // Send message function
+        async function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const sendBtn = document.getElementById('sendBtn');
+            const message = input.value.trim();
+            
+            if (!message || isProcessing) return;
+            
+            isProcessing = true;
+            input.disabled = true;
+            sendBtn.disabled = true;
+            
+            // Add user message
+            addMessageToUI(message, 'user');
+            input.value = '';
+            
+            // Show typing indicator
+            toggleTyping(true);
+            
+            try {
+                const botResponse = await callGeminiAPI(message);
+                toggleTyping(false);
+                addMessageToUI(botResponse, 'bot');
+            } catch (error) {
+                toggleTyping(false);
+                showError('Failed to get response. Please try again.');
+                console.error('Send message error:', error);
+            } finally {
+                isProcessing = false;
+                input.disabled = false;
+                sendBtn.disabled = false;
+                input.focus();
+                autoResizeTextarea();
+            }
+        }
+
+        // Ask a predefined question
+        function askQuestion(question) {
+            const input = document.getElementById('chatInput');
+            input.value = question;
+            input.focus();
+            sendMessage();
+        }
+
+        // Auto-resize textarea
+        function autoResizeTextarea() {
+            const textarea = document.getElementById('chatInput');
+            textarea.style.height = 'auto';
+            textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
+        }
+
+        // Handle keyboard input
+        function handleKeyPress(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        }
+
+        // Clear chat function
+        function clearChat() {
+            const chatMessages = document.getElementById('chatMessages');
+            chatMessages.innerHTML = `
+                <div class="welcome-section">
+                    <div class="welcome-title">
+                        <span>👋</span>
+                        Brand Portal Support
+                    </div>
+                    <p style="color: var(--text-secondary); line-height: 1.5;">I'm here to help you manage your brand presence, products, and packages. Ask me about any aspect of using the brand portal effectively.</p>
+                    
+                    <div class="help-categories">
+                        <div class="help-category" onclick="askQuestion('How do I purchase and manage brand packages?')">
+                            <span class="category-icon">💳</span>
+                            <div class="category-title">Brand Packages</div>
+                            <div class="category-desc">Purchase, upgrade, manage</div>
+                        </div>
+                        <div class="help-category" onclick="askQuestion('How do I view my live products on the app?')">
+                            <span class="category-icon">📱</span>
+                            <div class="category-title">Live Products</div>
+                            <div class="category-desc">View, monitor, track</div>
+                        </div>
+                        <div class="help-category" onclick="askQuestion('How do I add and submit products for review?')">
+                            <span class="category-icon">📦</span>
+                            <div class="category-title">Product Submission</div>
+                            <div class="category-desc">Add, edit, submit</div>
+                        </div>
+                        <div class="help-category" onclick="askQuestion('How do I submit requests to the admin team?')">
+                            <span class="category-icon">📝</span>
+                            <div class="category-title">Admin Requests</div>
+                            <div class="category-desc">Support, changes, help</div>
+                        </div>
+                        <div class="help-category" onclick="askQuestion('How do I track my brand performance and analytics?')">
+                            <span class="category-icon">📊</span>
+                            <div class="category-title">Analytics</div>
+                            <div class="category-desc">Performance, insights</div>
+                        </div>
+                        <div class="help-category" onclick="askQuestion('How do I manage my brand profile and settings?')">
+                            <span class="category-icon">⚙️</span>
+                            <div class="category-title">Profile Settings</div>
+                            <div<div class="category-desc">Account, preferences</div>
+                        </div>
+                    </div>
+                </div>`;
+            
+            chatHistory = [];
+        }
+
+        // Export chat function
+        function exportChat() {
+            const messages = document.querySelectorAll('.message');
+            let chatText = `Brand Portal Support Chat Export\nGenerated: ${new Date().toLocaleString()}\n\n`;
+            
+            messages.forEach(message => {
+                const isBot = message.classList.contains('bot');
+                const content = message.querySelector('.message-content');
+                const time = message.querySelector('.message-time');
+                
+                if (content) {
+                    const sender = isBot ? 'Brand Assistant' : 'Brand User';
+                    const timestamp = time ? time.textContent : '';
+                    const text = content.textContent || content.innerText;
+                    chatText += `[${timestamp}] ${sender}: ${text}\n\n`;
+                }
+            });
+            
+            const blob = new Blob([chatText], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `brand-support-chat-${new Date().toISOString().split('T')[0]}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            const chatInput = document.getElementById('chatInput');
+            const sendBtn = document.getElementById('sendBtn');
+            
+            chatInput.addEventListener('keypress', handleKeyPress);
+            chatInput.addEventListener('input', autoResizeTextarea);
+            sendBtn.addEventListener('click', sendMessage);
+            
+            chatInput.focus();
+        });
+
+        // Make functions available globally for onclick handlers
+        window.askQuestion = askQuestion;
+        window.clearChat = clearChat;
+        window.exportChat = exportChat;
+    </script>
+</body>
+</html>
