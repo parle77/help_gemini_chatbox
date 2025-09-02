@@ -896,4 +896,59 @@ Be friendly, professional, and supportive. Remember that brands are business par
                         <div class="help-category" onclick="askQuestion('How do I manage my brand profile and settings?')">
                             <span class="category-icon">⚙️</span>
                             <div class="category-title">Profile Settings</div>
-                            <div
+                            <div<div class="category-desc">Account, preferences</div>
+                        </div>
+                    </div>
+                </div>`;
+            
+            chatHistory = [];
+        }
+
+        // Export chat function
+        function exportChat() {
+            const messages = document.querySelectorAll('.message');
+            let chatText = `Brand Portal Support Chat Export\nGenerated: ${new Date().toLocaleString()}\n\n`;
+            
+            messages.forEach(message => {
+                const isBot = message.classList.contains('bot');
+                const content = message.querySelector('.message-content');
+                const time = message.querySelector('.message-time');
+                
+                if (content) {
+                    const sender = isBot ? 'Brand Assistant' : 'Brand User';
+                    const timestamp = time ? time.textContent : '';
+                    const text = content.textContent || content.innerText;
+                    chatText += `[${timestamp}] ${sender}: ${text}\n\n`;
+                }
+            });
+            
+            const blob = new Blob([chatText], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `brand-support-chat-${new Date().toISOString().split('T')[0]}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            const chatInput = document.getElementById('chatInput');
+            const sendBtn = document.getElementById('sendBtn');
+            
+            chatInput.addEventListener('keypress', handleKeyPress);
+            chatInput.addEventListener('input', autoResizeTextarea);
+            sendBtn.addEventListener('click', sendMessage);
+            
+            chatInput.focus();
+        });
+
+        // Make functions available globally for onclick handlers
+        window.askQuestion = askQuestion;
+        window.clearChat = clearChat;
+        window.exportChat = exportChat;
+    </script>
+</body>
+</html>
