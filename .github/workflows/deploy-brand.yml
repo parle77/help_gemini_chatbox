@@ -1,0 +1,77 @@
+# Brand Portal Chatbot Deployment
+# Save as: .github/workflows/deploy-brand.yml
+
+name: Deploy Brand Portal Chatbot
+on:
+  push:
+    branches: [ main ]
+    paths: 
+      - 'brand-chat.html'
+      - '.github/workflows/deploy-brand.yml'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Debug - Check file contents before replacement
+      run: |
+        echo "=== CHECKING FOR PLACEHOLDERS ==="
+        grep -n "YOUR_GEMINI_API_KEY_HERE" brand-chat.html || echo "❌ No API key placeholder found"
+        echo ""
+        echo "=== CHECKING ENVIRONMENT VARIABLES ==="
+        echo "GEMINI_KEY exists: $([[ -n "${{ secrets.GEMINI_API_KEY }}" ]] && echo "✅ Yes" || echo "❌ No")"
+        echo "GEMINI_KEY length: ${{ secrets.GEMINI_API_KEY != '' && 'Set' || 'Not Set' }}"
+        
+    - name: Replace API key placeholder
+      env:
+        GEMINI_KEY: ${{ secrets.GEMINI_API_KEY }}
+      run: |
+        echo "🔄 Starting API key replacement..."
+        
+        # Check if environment variable is set
+        if [[ -z "$GEMINI_KEY" ]]; then
+          echo "❌ GEMINI_KEY is empty"
+          exit 1
+        fi
+        
+        echo "✅ GEMINI_KEY environment variable is set"
+        
+        # Replace placeholder using sed
+        sed -i "s|YOUR_GEMINI_API_KEY_HERE|${GEMINI_KEY}|g" brand-chat.html
+        
+        echo "✅ API key replacement completed"
+        
+    - name: Debug - Verify replacement worked
+      run: |
+        echo "=== CHECKING REPLACEMENT RESULTS ==="
+        # Check if any placeholders remain
+        if grep -q "YOUR_GEMINI_API_KEY_HERE" brand-chat.html; then
+          echo "❌ API key placeholder was not replaced:"
+          grep -n "YOUR_GEMINI_API_KEY_HERE" brand-chat.html
+          exit 1
+        else
+          echo "✅ API key placeholder successfully replaced"
+        fi
+        
+        # Verify config section looks correct
+        echo ""
+        echo "=== CONFIG SECTION ==="
+        grep -A 5 "GEMINI_API_KEY:" brand-chat.html | head -10
+        
+    - name: Deploy to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: .
+        destination_dir: brand
+        force_orphan: true
+        
+    - name: Deployment complete
+      run: |
+        echo "🚀 Brand Portal Chatbot deployment completed successfully!"
+        echo "📱 Your brand chatbot should be available at: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/brand/brand-chat.html"
