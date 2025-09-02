@@ -3,7 +3,7 @@ on:
   push:
     branches: [ main ]
     paths: 
-      - 'brand-chat.html'
+      - 'brand_index.html'
       - '.github/workflows/deploy-brand.yml'
   workflow_dispatch:
 
@@ -15,6 +15,16 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
       
+    - name: Debug - Check file exists
+      run: |
+        echo "=== CHECKING FILE EXISTS ==="
+        ls -la *.html || echo "No HTML files found"
+        if [[ -f "brand_index.html" ]]; then
+          echo "✅ brand_index.html found"
+        else
+          echo "❌ brand_index.html not found"
+        fi
+        
     - name: Replace API key placeholder
       env:
         GEMINI_KEY: ${{ secrets.GEMINI_API_KEY }}
@@ -23,12 +33,12 @@ jobs:
           echo "❌ GEMINI_KEY is empty"
           exit 1
         fi
-        sed -i "s|YOUR_GEMINI_API_KEY_HERE|${GEMINI_KEY}|g" brand-chat.html
+        sed -i "s|YOUR_GEMINI_API_KEY_HERE|${GEMINI_KEY}|g" brand_index.html
         
     - name: Rename file to index.html
       run: |
-        cp brand-chat.html index.html
-        echo "✅ Created index.html from brand-chat.html"
+        cp brand_index.html index.html
+        echo "✅ Created index.html from brand_index.html"
         
     - name: Deploy to GitHub Pages
       uses: peaceiris/actions-gh-pages@v3
@@ -39,5 +49,5 @@ jobs:
         
     - name: Deployment complete
       run: |
-        echo "🚀 Brand Portal Chatbot deployed to root directory!"
+        echo "🚀 Brand Portal Chatbot deployed successfully!"
         echo "📱 Available at: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/"
