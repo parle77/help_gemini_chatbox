@@ -7,20 +7,42 @@ on:
       - '.github/workflows/deploy-brand.yml'
   workflow_dispatch:
 
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
       
-    - name: Debug - Check file exists
+    - name: Debug - Check secret and file
+      env:
+        GEMINI_KEY: ${{ secrets.GEMINI_API_KEY }}
       run: |
-        echo "=== CHECKING FILE EXISTS ==="
-        ls -la *.html || echo "No HTML files found"
+        echo "=== DEBUGGING ==="
+        echo "GEMINI_KEY length: ${#GEMINI_KEY}"
+        if [[ -z "$GEMINI_KEY" ]]; then
+          echo "❌ GEMINI_KEY is empty or not set"
+          exit 1
+        else
+          echo "✅ GEMINI_KEY is set (length: ${#GEMINI_KEY})"
+        fi
+        
         if [[ -f "brand_index.html" ]]; then
-          echo "✅ brand_index.html found"
+          echo "✅ brand_index.html exists"
+          if grep -q "YOUR_GEMINI_API_KEY_HERE" brand_index.html; then
+            echo "✅ Found placeholder in file"
+          else
+            echo "❌ No placeholder found in file"
+          fi
         else
           echo "❌ brand_index.html not found"
         fi
@@ -29,25 +51,31 @@ jobs:
       env:
         GEMINI_KEY: ${{ secrets.GEMINI_API_KEY }}
       run: |
-        if [[ -z "$GEMINI_KEY" ]]; then
-          echo "❌ GEMINI_KEY is empty"
-          exit 1
-        fi
         sed -i "s|YOUR_GEMINI_API_KEY_HERE|${GEMINI_KEY}|g" brand_index.html
+        echo "✅ API key replacement completed"
+        
+    - name: Verify replacement
+      run: |
+        if grep -q "YOUR_GEMINI_API_KEY_HERE" brand_index.html; then
+          echo "❌ Placeholder still exists after replacement"
+          exit 1
+        else
+          echo "✅ Placeholder successfully replaced"
+        fi
         
     - name: Rename file to index.html
       run: |
         cp brand_index.html index.html
-        echo "✅ Created index.html from brand_index.html"
+        echo "✅ Created index.html"
+        
+    - name: Setup Pages
+      uses: actions/configure-pages@v3
+      
+    - name: Upload artifact
+      uses: actions/upload-pages-artifact@v2
+      with:
+        path: '.'
         
     - name: Deploy to GitHub Pages
-      uses: peaceiris/actions-gh-pages@v3
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: .
-        force_orphan: true
-        
-    - name: Deployment complete
-      run: |
-        echo "🚀 Brand Portal Chatbot deployed successfully!"
-        echo "📱 Available at: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/"
+      id: deployment
+      uses: actions/deploy-pages@v2
