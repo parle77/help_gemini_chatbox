@@ -896,11 +896,10 @@ Be friendly, professional, and supportive. Remember that brands are business par
                         <div class="help-category" onclick="askQuestion('How do I manage my brand profile and settings?')">
                             <span class="category-icon">⚙️</span>
                             <div class="category-title">Profile Settings</div>
-                            <div<div class="category-desc">Account, preferences</div>
+                            <div class="category-desc">Account, preferences</div>
                         </div>
                     </div>
                 </div>`;
-            
             chatHistory = [];
         }
 
@@ -942,7 +941,34 @@ Be friendly, professional, and supportive. Remember that brands are business par
             chatInput.addEventListener('input', autoResizeTextarea);
             sendBtn.addEventListener('click', sendMessage);
             
+            // Handle URL parameters for Adalo integration
+            const urlParams = new URLSearchParams(window.location.search);
+            const brandId = urlParams.get('brandId') || urlParams.get('userId');
+            const brandName = urlParams.get('brandName') || urlParams.get('name');
+            
+            if (brandName && brandName !== 'undefined') {
+                const welcomeSection = document.querySelector('.welcome-section p');
+                if (welcomeSection) {
+                    welcomeSection.innerHTML = `Welcome back, <strong>${brandName}</strong>! I'm here to help you manage your brand presence, products, and packages. Ask me about any aspect of using the brand portal effectively.`;
+                }
+            }
+            
             chatInput.focus();
+        });
+
+        // Handle postMessage communication with Adalo
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'ADALO_BRAND_INFO') {
+                const { brandId, brandName } = event.data;
+                console.log('Received brand info via postMessage:', { brandId, brandName });
+                
+                if (brandName && brandName !== 'undefined') {
+                    const welcomeSection = document.querySelector('.welcome-section p');
+                    if (welcomeSection) {
+                        welcomeSection.innerHTML = `Welcome back, <strong>${brandName}</strong>! I'm here to help you manage your brand presence, products, and packages. Ask me about any aspect of using the brand portal effectively.`;
+                    }
+                }
+            }
         });
 
         // Make functions available globally for onclick handlers
